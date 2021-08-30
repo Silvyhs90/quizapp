@@ -6,26 +6,60 @@ const API_URL ='https://opentdb.com/api.php?amount=20&category=14&difficulty=eas
 function App() {
 
 const [questions, setQuestions] = useState([]);
+const [currentIndex, setCurrentIndex] = useState(0)
+const [score, setScore] = useState(0);
+const [showAnswers, setShowAnswers]= useState(false);
 
 useEffect(() => {
   fetch(API_URL)
   .then((res) => res.json())
   .then((data) => {
-    setQuestions(data.results);
+    const questions = data.results.map((question) => 
+    ({
+        ...question,
+        answers: [ 
+          question.correct_answer,
+           ...question.incorrect_answers
+        ].sort(() => Math.random() - 0.5)
+    }))
+
+    setQuestions(questions);
   });
 }, []);
 
 const handleAnswer= (answer) => {
-  
+  if(!showAnswers)
+  {
+      if(answer === questions[currentIndex].correct_answer)
+      {
+          setScore(score + 1);
+      }
+  }
+
+  setShowAnswers(true);
+};
+
+const handleNextQuestion= () => {
+  setCurrentIndex(currentIndex + 1);
+
+  setShowAnswers(false);
 };
 
   return questions.length > 0 ? (
     <div className="container"> 
-    <Questionaire data={questions[0]} handleAnswer={handleAnswer} />
+      {currentIndex >= questions.length ? (
+      <h1 className="text-3xl text-white font-bold">Game ended! Your Score is: {score}!</h1>
+  ) : (
+     <Questionaire 
+      data={questions[currentIndex]}
+      showAnswers={showAnswers} 
+      handleNextQuestion={handleNextQuestion}
+      handleAnswer={handleAnswer} />
+    )}
     </div> 
     ) : (
         <h2 className="text-2xl text-white front-bold">
-          Cargando preguntas...!</h2>
+          Loading Questions...!</h2>
     );
 }
 
